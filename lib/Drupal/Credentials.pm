@@ -315,9 +315,14 @@ L<http://search.cpan.org/dist/Drupal-Credentials/>
 
 =back
 
+=head1 INSTALLATION
 
-=head1 ACKNOWLEDGEMENTS
+To install this module, run the following commands:
 
+	perl Makefile.PL
+	make
+	make test
+	make install
 
 =head1 LICENSE AND COPYRIGHT
 
@@ -328,7 +333,6 @@ under the terms of either: the GNU General Public License as published
 by the Free Software Foundation; or the Artistic License.
 
 See http://dev.perl.org/licenses/ for more information.
-
 
 =cut
 
