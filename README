@@ -1,112 +1,120 @@
-hohmoem:e::M:eMnegnegle:l::p:rporjoejcetcst:Us:s:De:rrDurpCuaoplna-tlCr-riCebrdueetdneetdnitaPileasrl:ls::bD:lobiclbui:mb:e:ln:itlbai:tb:i:Do:rnDurpuapla:l::C:rCerdeednetnitailasl(s3()3)
+NAME
+    Drupal::Credentials - Access credentials (user, pass etc.) from Drupal's
+    sites directory (settings.php)
 
+VERSION
+    Version 0.01
 
+SYNOPSIS
+    Access info from Drupal's $db_uri contained in settings.php
 
-NNAAMMEE
-       Drupal::Credentials - Access credentials (username, password etc.) from
-       Drupal's sites directory (settings.php)!
+        use Drupal::Credentials;
 
-VVEERRSSIIOONN
-       Version 0.01
+        my $credentials = Drupal::Credentials->new($site_dir);
+            $credentials->parse_sites_dir
 
-SSYYNNOOPPSSIISS
-       Read $db_uri from Drupal's settings.php make accessing it easy
+            my @sites=$credentials->get_sites;
 
-           use Drupal::Credentials;
+            foreach my $site_id ($sites) {
+                    my $dbstring=$credentials->get_dbstring($site_id);
+                    my $proto=$credentials->get_scheme($site_id);
+                    my $passw=$credentials->get_pass($site_id);
+                    my $db=$credentials->get_database($site_id);
+                    my $host=$credentials->get_host($site_id);
+                    my $user=$credentials->get_user($site_id);
+            }
+            my $sites_dir=$credentials->get_sites_dir;
 
-           my $credentials = Drupal::Credentials->new($site_dir);
-               $credentials->parse_sites_dir
+METHODS
+  my $credentials = Drupal::Credentials->new($site_dir);
+    $site_dir is the drupal/sites
 
-               my @sites=$credentials->get_sites;
+    Returns 1 on success and nothing on failure.
 
-               foreach my $site_id ($sites) {
-                       my $dbstring=$credentials->get_dbstring($site_id);
-                       my $proto=$credentials->get_protocoll($site_id);
-                       my $passw=$credentials->get_password($site_id);
-                       my $db=$credentials->get_database($site_id);
-                       my $host=$credentials->get_host($site_id);
-                       my $username=$credentials->get_username($site_id);
-               }
-               my $sites_dir=$credentials->get_sites_dir;
+  $credentials->parse_sites_dir
+    Reads the directory specified as sites_dir during new, and looks for
+    subdirectories which a setting.php file in them. Settings.php file is
+    searched for $db_url from which the credentials are extracted.
 
-MMEETTHHOODDSS
-   mmyy $$ccrreeddeennttiiaallss == DDrruuppaall::::CCrreeddeennttiiaallss-->>nneeww(($$ssiittee__ddiirr));;
-       $site_dir is the drupal/sites
+  my $host=$credentials->get_host($site_id);
+    Return host from credentials.
 
-       Returns 1 on success and nothing on failure.
+  my $pw=$credentials->get_pass($site_id);
+    Return pass from credentials for site with $site_id.
 
-   $$ccrreeddeennttiiaallss-->>ppaarrssee__ssiitteess__ddiirr
-       Reads the directory specified as sites_dir during new, and looks for
-       subdirectories which a setting.php file in them. Settings.php file is
-       searched for $db_url from which the credentials are extracted.
+  my $proto=$credentials->get_scheme($site_id);
+    Return scheme from credentials for site with $site_id.
 
-   mmyy $$hhoosstt==$$ccrreeddeennttiiaallss-->>ggeett__hhoosstt(($$ssiittee__iidd));;
-       Return host from credentials.
+  my $un=$credentials->get_user($site_id);
+    Return user from credentials for site with $site_id.
 
-   mmyy $$ppww==$$ccrreeddeennttiiaallss-->>ggeett__ppaasssswwoorrdd(($$ssiittee__iidd));;
-       Return password from credentials for site with $site_id.
+  my $db=$credentials->get_database($site_id);
+    Return database from credentials for site with $site_id.
 
-   mmyy $$pprroottoo==$$ccrreeddeennttiiaallss-->>ggeett__pprroottooccooll(($$ssiittee__iidd));;
-       Return 'protocol' from credentials for site with $site_id.
+  my $dbstring=$credentials->get_dbstring($site_id);
+    Return string from settings.php's $db_uri for site with $site_id. This
+    one will not be unescaped, if it uses hex encoding (e.g. %2a for :). I
+    suspect that this method is not of real use except for debugging.
 
-   mmyy $$uunn==$$ccrreeddeennttiiaallss-->>ggeett__uusseerrnnaammee(($$ssiittee__iidd));;
-       Return username from credentials for site with $site_id.
+  my @sites=$credentials->get_sites;
+    Return site ids in an array. A site id is the name of the directory in
+    sites directory, e.g. exampledomain.com
 
-   mmyy $$ddbb==$$ccrreeddeennttiiaallss-->>ggeett__ddaattaabbaassee(($$ssiittee__nnaammee));;
-       Return database from credentials for site with $site_id.
+    (In code site id is sometimes referred to as site name.)
 
-   mmyy @@ssiitteess==$$ccrreeddeennttiiaallss-->>ggeett__ssiitteess;;
-       Return site ids in an array. A site id is the name of the directory in
-       sites directory, e.g.       exampledomain.com
+  my $sites_dir=$credentials->get_sites_dir;
+    Return Drupal's path for site as specified during new.
 
-       (In code site id is sometimes referred to as site name.)
+SEE ALSO
+    http://php.net/manual/en/function.parse-url.php Drupal's settings.php
 
-   mmyy $$ssiitteess__ddiirr==$$ccrreeddeennttiiaallss-->>ggeett__ssiitteess__ddiirr;;
-       Return Drupal's path for site as specified during new.
+AUTHOR
+    Maurice Mengel, "<mauricemengel at gmail.com>"
 
-AAUUTTHHOORR
-       Maurice Mengel, "<mauricemengel at gmail.com>"
+BUGS
+    Please report any bugs or feature requests to "bug-drupal-credentials at
+    rt.cpan.org", or through the web interface at
+    <http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Drupal-Credentials>. I
+    will be notified, and then you'll automatically be notified of progress
+    on your bug as I make changes.
 
-BBUUGGSS
-       Please report any bugs or feature requests to "bug-drupal-credentials
-       at rt.cpan.org", or through the web interface at
-       <http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Drupal-Credentials>.  I
-       will be notified, and then you'll automatically be notified of progress
-       on your bug as I make changes.
+SUPPORT
+    You can find documentation for this module with the perldoc command.
 
-SSUUPPPPOORRTT
-       You can find documentation for this module with the perldoc command.
+        perldoc Drupal::Credentials
 
-           perldoc Drupal::Credentials
+    You can also look for information at:
 
-       You can also look for information at:
+    *   RT: CPAN's request tracker
 
-       ·   RT: CPAN's request tracker
+        <http://rt.cpan.org/NoAuth/Bugs.html?Dist=Drupal-Credentials>
 
-           <http://rt.cpan.org/NoAuth/Bugs.html?Dist=Drupal-Credentials>
+    *   AnnoCPAN: Annotated CPAN documentation
 
-       ·   AnnoCPAN: Annotated CPAN documentation
+        <http://annocpan.org/dist/Drupal-Credentials>
 
-           <http://annocpan.org/dist/Drupal-Credentials>
+    *   CPAN Ratings
 
-       ·   CPAN Ratings
+        <http://cpanratings.perl.org/d/Drupal-Credentials>
 
-           <http://cpanratings.perl.org/d/Drupal-Credentials>
+    *   Search CPAN
 
-       ·   Search CPAN
+        <http://search.cpan.org/dist/Drupal-Credentials/>
 
-           <http://search.cpan.org/dist/Drupal-Credentials/>
+INSTALLATION
+    To install this module, run the following commands:
 
-AACCKKNNOOWWLLEEDDGGEEMMEENNTTSS
-LLIICCEENNSSEE AANNDD CCOOPPYYRRIIGGHHTT
-       Copyright 2010 Maurice Mengel.
+            perl Makefile.PL
+            make
+            make test
+            make install
 
-       This program is free software; you can redistribute it and/or modify it
-       under the terms of either: the GNU General Public License as published
-       by the Free Software Foundation; or the Artistic License.
+LICENSE AND COPYRIGHT
+    Copyright 2010 Maurice Mengel.
 
-       See http://dev.perl.org/licenses/ for more information.
+    This program is free software; you can redistribute it and/or modify it
+    under the terms of either: the GNU General Public License as published
+    by the Free Software Foundation; or the Artistic License.
 
+    See http://dev.perl.org/licenses/ for more information.
 
-
-pehrolmev:5:.M1e0n.g1el::projects::Drupal-Cr2e0d1e0n-t1i0a-l2s3::blib::lib::Drupal::Credentials(3)
