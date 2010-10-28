@@ -2,6 +2,7 @@ package Drupal::Credentials;
 
 use warnings;
 use strict;
+
 #use URI::Escape; or regex?
 
 =head1 NAME
@@ -11,11 +12,12 @@ Drupal's sites directory (settings.php)
 
 =head1 VERSION
 
-Version 0.01
+Version 0.02
 
 =cut
 
-our $VERSION = '0.01';
+our $VERSION  = '0.02';
+$Drupal::Credentials::Symlinks ='dontfollow';    # default is dontfollow or set to follow
 
 =head1 SYNOPSIS
 
@@ -23,18 +25,20 @@ Access info from Drupal's $db_uri contained in settings.php
 
     use Drupal::Credentials;
 
+#new
+	Drupal::Credentials::Symlinks='follow';#default is dontfollow
+
     my $credentials = Drupal::Credentials->new($site_dir);
-	$credentials->parse_sites_dir
 
-	my @sites=$credentials->get_sites;
-
-	foreach my $site_id ($sites) {
+	foreach my $site_id ($credentials->list) {
 		my $dbstring=$credentials->get_dbstring($site_id);
 		my $proto=$credentials->get_scheme($site_id);
 		my $passw=$credentials->get_pass($site_id);
 		my $db=$credentials->get_database($site_id);
 		my $host=$credentials->get_host($site_id);
 		my $user=$credentials->get_user($site_id);
+#new:
+		my $dir=$credentials->get_install_dir ($site_id);
 	}
 	my $sites_dir=$credentials->get_sites_dir;
 
@@ -43,9 +47,9 @@ Access info from Drupal's $db_uri contained in settings.php
 
 =head2 my $credentials = Drupal::Credentials->new($site_dir);
 
-$site_dir is the drupal/sites
+$site_dir is the full path to the drupal/sites directory.
 
-Returns 1 on success and nothing on failure.
+Returns the Drupal::Credentials object on success and nothing on failure.
 
 =cut
 
@@ -53,38 +57,41 @@ sub new {
 
 	my $class     = shift;
 	my $sites_dir = shift;
-	if ( !$sites_dir ) {
-		return;
-
-		#	carp "Sites_dir not specified!";
-	}
-	if ( !-e $sites_dir ) {
-		return;
-
-		#carp "Sites_dir does not exist";
-	}
+	return if ( !$sites_dir );
+	return if ( !-e $sites_dir );
 
 	my $self = {};
 	$self->{sites_dir} = $sites_dir;
 
 	bless( $self, $class );
+	$self->_parse_sites_dir;
 	return $self;
 }
 
-=head2 $credentials->parse_sites_dir
+=head2 $credentials->_parse_sites_dir
 
 Reads the directory specified as sites_dir during new, and looks for
 subdirectories which a setting.php file in them. Settings.php file
 is searched for $db_url from which the credentials are extracted.
 
+TODO: Currently, always returns 1. Should be able to fail
+
 =cut
 
-sub parse_sites_dir {
+sub _parse_sites_dir {
 	my $self = shift;
 
 	opendir( my $dh, $self->{sites_dir} ) || die "can't opendir sites dir: $!";
+
+	#ignore the 'all' directory
 	my @sites = grep { !/^\.|all/ && -d "$self->{sites_dir}/$_" } readdir($dh);
 	closedir $dh;
+
+	#weed out symlinks unless Drupal::Credentials::Symlinks = 'follow'
+	if ( $Drupal::Credentials::Symlinks eq 'dontfollow' ) {
+		print "GET HERE $Drupal::Credentials::Symlinks\n";
+		@sites=grep (! -l "$self->{sites_dir}/$_",@sites);
+	}
 
 	my @dbstrings;
 	foreach my $site_id (@sites) {
@@ -94,12 +101,11 @@ sub parse_sites_dir {
 
 		if ( -f "$path/settings.php" ) {
 			open( SETTINGS, "<$path/settings.php" );
+			$self->{sites}{$site_id}{install_dir}=$path;
 			while (<SETTINGS>) {
 				if ( $_ =~ /^\s*\$db_url\s*=\s*'(\w+:\/\/[^']+)'/ ) {
 					$self->{sites}{$site_id}{dbstring} = $1;
 					$self->_parse_dbstring($site_id);
-
-				#					($1) ? $href->{function} = $1 : die "no function found\n";
 				}
 			}
 			close SETTINGS;
@@ -139,8 +145,9 @@ sub _parse_dbstring {
 
 	#unescape if uri encoded
 	foreach (qw/scheme user pass host db/) {
-		$self->{sites}{$site_id}{$_}=~ s/%([0-9A-Fa-f]{2})/chr(hex($1))/eg;
-		print "$self->{sites}{$site_id}{$_}\n";
+		$self->{sites}{$site_id}{$_} =~ s/%([0-9A-Fa-f]{2})/chr(hex($1))/eg;
+
+		#print "$self->{sites}{$site_id}{$_}\n";
 	}
 
 	#TODO
@@ -244,9 +251,7 @@ sub get_dbstring {
 	return $self->{sites}{$site_id}{db};
 }
 
-
-=head2 my @sites=$credentials->get_sites;
-
+=head2 my $credentials->list;
 Return site ids in an array. A site id is the name of the directory in sites
 directory, e.g.
 	exampledomain.com
@@ -255,10 +260,31 @@ directory, e.g.
 
 =cut
 
-sub get_sites {
+sub list {
 	my $self = shift;
 	return keys %{ $self->{sites} };
+
 }
+
+=head2 my $sites_dir=$credentials->get_install_dir;
+
+Return path for the installation (in Drupal's site directory). At the moment,
+it can be relative or absolute path.
+
+Todo: Do i need an absolute path?
+
+=cut
+
+sub get_install_dir {
+	my $self = shift;
+	my $site_id = shift;
+
+	#return empty handed when no site specified
+	return if ( !$site_id );
+	return $self->{sites}{$site_id}{install_dir};
+}
+
+
 
 =head2 my $sites_dir=$credentials->get_sites_dir;
 

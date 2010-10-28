@@ -3,38 +3,42 @@ NAME
     sites directory (settings.php)
 
 VERSION
-    Version 0.01
+    Version 0.02
 
 SYNOPSIS
     Access info from Drupal's $db_uri contained in settings.php
 
         use Drupal::Credentials;
 
+    #new Drupal::Credentials::Symlinks='follow';#default is dontfollow
+
         my $credentials = Drupal::Credentials->new($site_dir);
-            $credentials->parse_sites_dir
 
-            my @sites=$credentials->get_sites;
-
-            foreach my $site_id ($sites) {
+            foreach my $site_id ($credentials->list) {
                     my $dbstring=$credentials->get_dbstring($site_id);
                     my $proto=$credentials->get_scheme($site_id);
                     my $passw=$credentials->get_pass($site_id);
                     my $db=$credentials->get_database($site_id);
                     my $host=$credentials->get_host($site_id);
                     my $user=$credentials->get_user($site_id);
+    #new:
+                    my $dir=$credentials->get_install_dir ($site_id);
             }
             my $sites_dir=$credentials->get_sites_dir;
 
 METHODS
   my $credentials = Drupal::Credentials->new($site_dir);
-    $site_dir is the drupal/sites
+    $site_dir is the full path to the drupal/sites directory.
 
-    Returns 1 on success and nothing on failure.
+    Returns the Drupal::Credentials object on success and nothing on
+    failure.
 
-  $credentials->parse_sites_dir
+  $credentials->_parse_sites_dir
     Reads the directory specified as sites_dir during new, and looks for
     subdirectories which a setting.php file in them. Settings.php file is
     searched for $db_url from which the credentials are extracted.
+
+    TODO: Currently, always returns 1. Should be able to fail
 
   my $host=$credentials->get_host($site_id);
     Return host from credentials.
@@ -56,11 +60,17 @@ METHODS
     one will not be unescaped, if it uses hex encoding (e.g. %2a for :). I
     suspect that this method is not of real use except for debugging.
 
-  my @sites=$credentials->get_sites;
-    Return site ids in an array. A site id is the name of the directory in
-    sites directory, e.g. exampledomain.com
-
+  my $credentials->list;
+Return site ids in an array. A site id is the name of the directory in sites
+directory, e.g.
+	exampledomain.com
     (In code site id is sometimes referred to as site name.)
+
+  my $sites_dir=$credentials->get_install_dir;
+    Return path for the installation (in Drupal's site directory). At the
+    moment, it can be relative or absolute path.
+
+    Todo: Do i need an absolute path?
 
   my $sites_dir=$credentials->get_sites_dir;
     Return Drupal's path for site as specified during new.
